@@ -130,8 +130,9 @@ async function processVideo(jobId: string, script: string, niche: string, topic:
 
         console.log(`[Job ${jobId}] Render complete:`, outputLocation);
 
-        // 4. Return local URL
-        const localUrl = `/out/${path.basename(outputLocation)}`;
+        // 4. Return absolute URL
+        const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+        const localUrl = `${baseUrl}/out/${path.basename(outputLocation)}`;
 
         job.status = 'completed';
         job.videoUrl = localUrl;
