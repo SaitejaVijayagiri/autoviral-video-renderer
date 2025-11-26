@@ -5,7 +5,10 @@ const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 export async function fetchImages(query: string, count: number = 5): Promise<string[]> {
     if (!UNSPLASH_ACCESS_KEY) {
         console.warn('UNSPLASH_ACCESS_KEY not set, using placeholder images');
-        return Array(count).fill('https://picsum.photos/1080/1920');
+        // Use placehold.co which is more reliable than picsum.photos
+        return Array(count).fill(0).map((_, i) =>
+            `https://placehold.co/1080x1920/6366f1/white?text=Image+${i + 1}`
+        );
     }
 
     try {
@@ -23,7 +26,9 @@ export async function fetchImages(query: string, count: number = 5): Promise<str
         return response.data.results.map((img: any) => img.urls.regular);
     } catch (error) {
         console.error('Error fetching images from Unsplash:', error);
-        // Fallback to placeholders if API fails
-        return Array(count).fill('https://picsum.photos/1080/1920');
+        // Fallback to reliable placeholders if API fails
+        return Array(count).fill(0).map((_, i) =>
+            `https://placehold.co/1080x1920/6366f1/white?text=Image+${i + 1}`
+        );
     }
 }
