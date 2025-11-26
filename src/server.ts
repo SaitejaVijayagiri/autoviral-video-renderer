@@ -1,13 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import { bundle } from '@remotion/bundler';
-import { renderMedia, selectComposition } from '@remotion/renderer';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { fetchImages } from './services/unsplash';
 import { generateSpeech } from './services/tts';
+import { renderVideoWithFFmpeg } from './services/ffmpeg-renderer';
 import { randomUUID } from 'crypto';
 
 dotenv.config();
@@ -49,7 +48,7 @@ setInterval(() => {
 app.get('/', (req, res) => {
     res.json({
         status: 'online',
-        service: 'AutoViral Video Renderer',
+        service: 'AutoViral Video Renderer (FFmpeg)',
         endpoints: {
             render: 'POST /render',
             status: 'GET /status/:id'
@@ -114,53 +113,24 @@ async function processVideo(jobId: string, script: string, niche: string, topic:
         const voiceoverText = script.replace(/\[.*?\]/g, '').replace(/#\w+/g, '');
         const voiceoverUrl = await generateSpeech(voiceoverText);
 
-        // 3. Bundle the video
-        const compositionId = 'MotivationalVideo';
-        const entry = './src/index.ts';
-
-        console.log(`[Job ${jobId}] Bundling video...`);
-        const bundleLocation = await bundle({
-            entryPoint: path.resolve(entry),
-            webpackOverride: (config) => config,
-        });
-
-        // 4. Select composition
-        const composition = await selectComposition({
-            serveUrl: bundleLocation,
-            id: compositionId,
-            inputProps: {
-                script,
-                niche,
-                topic,
-                images,
-                voiceoverUrl,
-            },
-        });
-
-        // 5. Render video
+        // 3. Render video with FFmpeg
         const outputLocation = path.resolve(`out/${jobId}_${topic.replace(/\s+/g, '_')}.mp4`);
         if (!fs.existsSync('out')) {
             fs.mkdirSync('out');
         }
 
-        console.log(`[Job ${jobId}] Rendering video...`);
-        await renderMedia({
-            composition,
-            serveUrl: bundleLocation,
-            codec: 'h264',
-            outputLocation,
-            inputProps: {
-                script,
-                niche,
-                topic,
-                images,
-                voiceoverUrl,
-            },
+        console.log(`[Job ${jobId}] Rendering video with FFmpeg...`);
+        await renderVideoWithFFmpeg({
+            images,
+            script,
+            audioUrl: voiceoverUrl,
+            outputPath: outputLocation,
+            topic
         });
 
         console.log(`[Job ${jobId}] Render complete:`, outputLocation);
 
-        // 6. Return local URL
+        // 4. Return local URL
         const localUrl = `/out/${path.basename(outputLocation)}`;
 
         job.status = 'completed';

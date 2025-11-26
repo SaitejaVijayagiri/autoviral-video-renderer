@@ -1,7 +1,7 @@
 {
     "name": "autoviral-video-renderer",
     "version": "1.0.0",
-    "description": "Remotion-based video rendering service for AutoViral AI",
+    "description": "FFmpeg-based video rendering service for AutoViral AI",
     "main": "src/server.ts",
     "scripts": {
         "start": "tsx src/server.ts",
@@ -9,27 +9,22 @@
         "test": "tsx src/test-render.ts"
     },
     "dependencies": {
-        "@remotion/bundler": "^4.0.0",
-        "@remotion/cli": "^4.0.0",
-        "@remotion/renderer": "^4.0.0",
         "@supabase/supabase-js": "^2.38.4",
         "axios": "^1.6.0",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
+        "fluent-ffmpeg": "^2.1.2",
         "google-tts-api": "^2.0.2",
         "node-fetch": "^3.3.2",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "remotion": "^4.0.0",
         "tsx": "^4.20.6",
         "typescript": "^5.0.0"
     },
     "devDependencies": {
         "@types/cors": "^2.8.16",
         "@types/express": "^4.17.21",
-        "@types/node": "^20.0.0",
-        "@types/react": "^18.2.0"
+        "@types/fluent-ffmpeg": "^2.1.21",
+        "@types/node": "^20.0.0"
     },
     "engines": {
         "node": ">=18.0.0"
