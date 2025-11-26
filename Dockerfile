@@ -35,8 +35,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including tsx for running TypeScript)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -44,5 +44,5 @@ COPY . .
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["node", "src/server.ts"]
+# Start the application using tsx to run TypeScript directly
+CMD ["npx", "tsx", "src/server.ts"]
