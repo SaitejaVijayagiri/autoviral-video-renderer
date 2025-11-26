@@ -33,25 +33,6 @@ export class VeoService {
 
     async checkStatus(taskId: string): Promise<{ status: 'generating' | 'success' | 'failed', videoUrl?: string }> {
         try {
-            const response = await axios.get(`${BASE_URL}/record-info?taskId=${taskId}`, {
-                headers: this.headers
-            });
-
-            if (response.data.code === 200) {
-                const data = response.data.data;
-                switch (data.successFlag) {
-                    case 0: return { status: 'generating' };
-                    case 1:
-                        const urls = JSON.parse(data.resultUrls);
-                        return { status: 'success', videoUrl: urls[0] };
-                    case 2:
-                    case 3:
-                        return { status: 'failed' };
-                    default:
-                        return { status: 'failed' };
-                }
-            }
-            throw new Error(`Veo Status Error: ${response.data.msg}`);
         } catch (error: any) {
             console.error('[Veo] Status check failed:', error.message);
             throw error;
