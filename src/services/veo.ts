@@ -33,6 +33,40 @@ export class VeoService {
 
     async checkStatus(taskId: string): Promise<{ status: 'generating' | 'success' | 'failed', videoUrl?: string }> {
         try {
+            const response = await axios.get(`${BASE_URL}/record-info?taskId=${taskId}`, {
+                headers: this.headers
+            });
+
+            if (response.data.code === 200) {
+                const data = response.data.data;
+                // console.log(`[Veo] Status check response:`, JSON.stringify(data)); // Uncomment for deep debugging
+
+                switch (data.successFlag) {
+                    case 0: return { status: 'generating' };
+                    case 1:
+                        if (!data.resultUrls) {
+                            console.error('[Veo] Error: resultUrls is missing in success response', data);
+                            throw new Error('Veo API returned success but no video URLs');
+                        }
+                        try {
+                            const urls = JSON.parse(data.resultUrls);
+                            if (!urls || urls.length === 0) {
+                                throw new Error('Veo API returned empty video URL list');
+                            }
+                            return { status: 'success', videoUrl: urls[0] };
+                        } catch (e) {
+                            console.error('[Veo] Error parsing resultUrls:', data.resultUrls);
+                            throw new Error('Failed to parse Veo video URLs');
+                        }
+                    case 2:
+                    case 3:
+                        console.error('[Veo] Generation failed with flag:', data.successFlag);
+                        return { status: 'failed' };
+                    default:
+                        return { status: 'failed' };
+                }
+            }
+            throw new Error(`Veo Status Error: ${response.data.msg}`);
         } catch (error: any) {
             console.error('[Veo] Status check failed:', error.message);
             throw error;
