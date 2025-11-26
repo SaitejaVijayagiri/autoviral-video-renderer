@@ -22,7 +22,18 @@ const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+
 console.log('Supabase configured:', !!supabase);
+
+app.get('/', (req, res) => {
+    res.json({
+        status: 'online',
+        service: 'AutoViral Video Renderer',
+        endpoints: {
+            render: 'POST /render'
+        }
+    });
+});
 
 app.post('/render', async (req, res) => {
     try {
