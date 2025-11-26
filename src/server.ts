@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { fetchImages } from './services/unsplash';
 import { generateSpeech } from './services/tts';
 import { renderVideoWithFFmpeg } from './services/ffmpeg-renderer';
+import { veo } from './services/veo';
 import { randomUUID } from 'crypto';
 
 dotenv.config();
@@ -106,29 +107,46 @@ async function processVideo(jobId: string, script: string, niche: string, topic:
     jobs.set(jobId, job);
 
     try {
-        // 1. Fetch assets
-        const images = await fetchImages(niche);
+        // 1. Generate Video with Veo3.1
+        const prompt = `Cinematic shot of ${topic} related to ${niche}, high quality, 4k, inspiring, motivational`;
+        console.log(`[Job ${jobId}] Starting Veo generation with prompt: ${prompt}`);
 
-        // 2. Generate Voiceover
-        const voiceoverText = script.replace(/\[.*?\]/g, '').replace(/#\w+/g, '');
-        const voiceoverUrl = await generateSpeech(voiceoverText);
+        const taskId = await veo.generateVideoTask(prompt);
+        console.log(`[Job ${jobId}] Veo Task ID: ${taskId}`);
 
-        // 3. Render video with FFmpeg
+        // 2. Poll for completion
+        let videoUrl = '';
+        let attempts = 0;
+        const maxAttempts = 60; // 5 minutes (5s interval)
+
+        while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5s
+            attempts++;
+
+            const status = await veo.checkStatus(taskId);
+            console.log(`[Job ${jobId}] Veo Status: ${status.status} (Attempt ${attempts})`);
+
+            if (status.status === 'success' && status.videoUrl) {
+                videoUrl = status.videoUrl;
+                break;
+            } else if (status.status === 'failed') {
+                throw new Error('Veo video generation failed');
+            }
+        }
+
+        if (!videoUrl) {
+            throw new Error('Veo video generation timed out');
+        }
+
+        // 3. Download Video
         const outputLocation = path.resolve(`out/${jobId}_${topic.replace(/\s+/g, '_')}.mp4`);
         if (!fs.existsSync('out')) {
             fs.mkdirSync('out');
         }
 
-        console.log(`[Job ${jobId}] Rendering video with FFmpeg...`);
-        await renderVideoWithFFmpeg({
-            images,
-            script,
-            audioUrl: voiceoverUrl,
-            outputPath: outputLocation,
-            topic
-        });
-
-        console.log(`[Job ${jobId}] Render complete:`, outputLocation);
+        console.log(`[Job ${jobId}] Downloading video from ${videoUrl}...`);
+        await veo.downloadVideo(videoUrl, outputLocation);
+        console.log(`[Job ${jobId}] Download complete:`, outputLocation);
 
         // 4. Return absolute URL
         const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
