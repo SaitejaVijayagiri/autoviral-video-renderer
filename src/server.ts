@@ -17,10 +17,10 @@ app.use(express.json());
 
 const PORT = (process.env.PORT || 3000) as number;
 
-// Initialize Supabase client
+// Initialize Supabase client (optional)
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 app.post('/render', async (req, res) => {
     try {
@@ -87,41 +87,24 @@ app.post('/render', async (req, res) => {
 
         console.log('Render complete:', outputLocation);
 
-        // 6. Upload to Supabase Storage
+        // 6. Upload to Supabase Storage (if configured)
         const fileContent = fs.readFileSync(outputLocation);
         const fileName = `renders/${Date.now()}_${topic.replace(/\s+/g, '_')}.mp4`;
 
-        try {
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('videos')
-                .upload(fileName, fileContent, {
-                    contentType: 'video/mp4',
-                });
+        if (supabase) {
+            try {
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('videos')
+                    .upload(fileName, fileContent, {
+                        contentType: 'video/mp4',
+                    });
 
-            if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-            // 7. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('videos')
-                .getPublicUrl(fileName);
-
-            // Clean up local file
-            fs.unlinkSync(outputLocation);
-
-            res.json({ success: true, videoUrl: publicUrl });
-        } catch (uploadError) {
-            console.error('Supabase upload failed, returning local URL:', uploadError);
-            // Fallback to local URL - use 10.0.2.2 for native Android builds
-            const localUrl = `http://10.0.2.2:${PORT}/out/${path.basename(outputLocation)}`;
-            res.json({ success: true, videoUrl: localUrl, warning: 'Served locally due to upload failure' });
-        }
-
-    } catch (error: any) {
-        console.error('Render error:', error);
-        console.error('Stack trace:', error.stack);
-        res.status(500).json({ error: error.message, stack: error.stack });
-    }
-});
+                // 7. Get Public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('videos')
+            });
 
 // Serve output directory statically
 app.use('/out', express.static('out'));
