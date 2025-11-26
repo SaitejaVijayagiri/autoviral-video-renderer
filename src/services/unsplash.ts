@@ -7,7 +7,7 @@ export async function fetchImages(query: string, count: number = 5): Promise<str
         console.warn('UNSPLASH_ACCESS_KEY not set, using placeholder images');
         // Use placehold.co which is more reliable than picsum.photos
         return Array(count).fill(0).map((_, i) =>
-            `https://placehold.co/1080x1920/6366f1/white?text=Image+${i + 1}`
+            `https://placehold.co/1080x1920/6366f1/white.jpg?text=Image+${i + 1}`
         );
     }
 
@@ -28,7 +28,7 @@ export async function fetchImages(query: string, count: number = 5): Promise<str
         console.error('Error fetching images from Unsplash:', error);
         // Fallback to reliable placeholders if API fails
         return Array(count).fill(0).map((_, i) =>
-            `https://placehold.co/1080x1920/6366f1/white?text=Image+${i + 1}`
+            `https://placehold.co/1080x1920/6366f1/white.jpg?text=Image+${i + 1}`
         );
     }
 }
