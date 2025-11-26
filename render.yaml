@@ -3,6 +3,7 @@ services:
     name: autoviral-video-renderer
     env: docker
     plan: free
+    healthCheckPath: /
     envVars:
       - key: SUPABASE_URL
         value: https://example.supabase.co
