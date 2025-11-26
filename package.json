@@ -2,10 +2,8 @@
     "name": "autoviral-video-renderer",
     "version": "1.0.0",
     "description": "Remotion-based video rendering service for AutoViral AI",
-    "type": "module",
-    "main": "src/server.ts",
     "scripts": {
-        "start": "tsx src/server.ts",
+        "start": "node --loader tsx src/server.ts",
         "dev": "tsx watch src/server.ts",
         "test": "tsx src/test-render.ts"
     },
@@ -31,5 +29,8 @@
         "@types/node": "^20.0.0",
         "@types/react": "^18.2.0",
         "typescript": "^5.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
     }
 }
