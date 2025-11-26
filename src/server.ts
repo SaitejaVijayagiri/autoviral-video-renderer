@@ -17,10 +17,12 @@ app.use(express.json());
 
 const PORT = (process.env.PORT || 3000) as number;
 
-// Initialize Supabase client (optional)
+// Initialize Supabase client (optional - won't throw error if not configured)
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+console.log('Supabase configured:', !!supabase);
 
 app.post('/render', async (req, res) => {
     try {
@@ -36,8 +38,7 @@ app.post('/render', async (req, res) => {
         const images = await fetchImages(niche);
 
         // 2. Generate Voiceover
-        // We combine the script lines into one text for the TTS
-        const voiceoverText = script.replace(/\[.*?\]/g, '').replace(/#\w+/g, ''); // Remove brackets and hashtags
+        const voiceoverText = script.replace(/\[.*?\]/g, '').replace(/#\w+/g, '');
         const voiceoverUrl = await generateSpeech(voiceoverText);
 
         // 3. Bundle the video
@@ -65,7 +66,6 @@ app.post('/render', async (req, res) => {
 
         // 5. Render video
         const outputLocation = path.resolve(`out/${Date.now()}_${topic.replace(/\s+/g, '_')}.mp4`);
-        // Ensure out directory exists
         if (!fs.existsSync('out')) {
             fs.mkdirSync('out');
         }
@@ -87,30 +87,21 @@ app.post('/render', async (req, res) => {
 
         console.log('Render complete:', outputLocation);
 
-        // 6. Upload to Supabase Storage (if configured)
-        const fileContent = fs.readFileSync(outputLocation);
-        const fileName = `renders/${Date.now()}_${topic.replace(/\s+/g, '_')}.mp4`;
+        // 6. Return local URL (Supabase upload can be added later)
+        const localUrl = `/out/${path.basename(outputLocation)}`;
+        res.json({ success: true, videoUrl: localUrl });
 
-        if (supabase) {
-            try {
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('videos')
-                    .upload(fileName, fileContent, {
-                        contentType: 'video/mp4',
-                    });
-
-                if (uploadError) throw uploadError;
-
-                // 7. Get Public URL
-                const { data: { publicUrl } } = supabase.storage
-                    .from('videos')
-            });
+    } catch (error: any) {
+        console.error('Render error:', error);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({ error: error.message, stack: error.stack });
+    }
+});
 
 // Serve output directory statically
 app.use('/out', express.static('out'));
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Video renderer service listening on port ${PORT}`);
-    console.log(`Accessible from Android emulator at: http://10.0.2.2:${PORT}`);
-    console.log(`Accessible from local network at: http://10.113.95.240:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/`);
 });
