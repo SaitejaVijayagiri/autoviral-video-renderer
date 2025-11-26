@@ -1,13 +1,9 @@
 services:
   - type: web
     name: autoviral-video-renderer
-    env: node
-    buildCommand: npm install && npm run build
-    startCommand: node dist/server.js
+    env: docker
     plan: free
     envVars:
-      - key: NODE_VERSION
-        value: 20
       - key: SUPABASE_URL
         value: https://example.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
