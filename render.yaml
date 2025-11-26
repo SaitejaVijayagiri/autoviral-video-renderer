@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: autoviral-video-renderer
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: SUPABASE_URL
+        value: https://example.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: your-key-here
+      - key: UNSPLASH_ACCESS_KEY
+        value: optional
