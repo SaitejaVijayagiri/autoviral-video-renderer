@@ -7,11 +7,11 @@ export const RemotionRoot: React.FC = () => {
         <>
             <Composition
                 id="MotivationalVideo"
-                component={MotivationalVideo}
-                durationInFrames={900} // 30 seconds at 30fps
+                component={MotivationalVideo as any}
+                durationInFrames={900}
                 fps={30}
                 width={1080}
-                height={1920} // 9:16 aspect ratio for mobile
+                height={1920}
                 defaultProps={{
                     script: 'Your motivational script here',
                     niche: 'Motivation',

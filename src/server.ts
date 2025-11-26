@@ -15,7 +15,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = (process.env.PORT || 3000) as number;
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || '';
