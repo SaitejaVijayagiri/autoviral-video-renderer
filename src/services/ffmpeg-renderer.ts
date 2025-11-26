@@ -74,42 +74,16 @@ function createVideoFromImages(
         const duration = 3; // seconds per image
 
         // Write concat file
-        const concatContent = imagePaths
-            .map(img => `file '${img}'\nduration ${duration}`)
-            .join('\n') + `\nfile '${imagePaths[imagePaths.length - 1]}'`; // Last image needs to be repeated
-
-        fs.writeFileSync(concatFilePath, concatContent);
-
-        // Escape special characters for FFmpeg drawtext filter
-        const escapedTopic = topic.replace(/[\\:']/g, '\\$&').replace(/\s/g, '\\ ');
-
-        // Run FFmpeg command
-        ffmpeg()
-            .input(concatFilePath)
-            .inputOptions(['-f concat', '-safe 0'])
-            .input(audioPath)
-            .outputOptions([
-                '-c:v libx264',
-                '-pix_fmt yuv420p',
-                '-c:a aac',
-                '-shortest', // End when shortest input ends
-                '-vf', `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,drawtext=text='${escapedTopic}':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=100:box=1:boxcolor=black@0.5:boxborderw=10`
-            ])
-            .output(outputPath)
-            .on('start', (cmd) => {
-                console.log('[FFmpeg] Command:', cmd);
-            })
-            .on('progress', (progress) => {
-                console.log(`[FFmpeg] Progress: ${progress.percent?.toFixed(1)}%`);
-            })
-            .on('end', () => {
-                console.log('[FFmpeg] Rendering finished');
-                resolve();
-            })
-            .on('error', (err) => {
-                console.error('[FFmpeg] Error:', err);
-                reject(err);
-            })
-            .run();
-    });
+        console.log(`[FFmpeg] Progress: ${progress.percent?.toFixed(1)}%`);
+    })
+        .on('end', () => {
+            console.log('[FFmpeg] Rendering finished');
+            resolve();
+        })
+        .on('error', (err) => {
+            console.error('[FFmpeg] Error:', err);
+            reject(err);
+        })
+        .run();
+});
 }
