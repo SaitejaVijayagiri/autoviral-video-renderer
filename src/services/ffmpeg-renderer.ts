@@ -84,7 +84,7 @@ function createVideoFromImages(
         const textFilePath = path.join(path.dirname(imagePaths[0]), 'text.txt');
         fs.writeFileSync(textFilePath, topic);
 
-        // Run FFmpeg command
+        // Run FFmpeg command with memory optimizations for free tier (512MB limit)
         ffmpeg()
             .input(concatFilePath)
             .inputOptions(['-f concat', '-safe 0'])
@@ -92,9 +92,13 @@ function createVideoFromImages(
             .outputOptions([
                 '-c:v libx264',
                 '-pix_fmt yuv420p',
+                '-preset ultrafast', // Use fastest preset to save CPU/memory
+                '-tune stillimage',  // Optimize for slideshows
+                '-threads 2',        // Limit threads to reduce memory usage
                 '-c:a aac',
                 '-shortest', // End when shortest input ends
-                '-vf', `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,drawtext=textfile='${textFilePath}':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=100:box=1:boxcolor=black@0.5:boxborderw=10`
+                // Scale to 720p (720x1280) instead of 1080p to save memory
+                '-vf', `scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,drawtext=textfile='${textFilePath}':fontsize=50:fontcolor=white:x=(w-text_w)/2:y=80:box=1:boxcolor=black@0.5:boxborderw=10`
             ])
             .output(outputPath)
             .on('start', (cmd) => {
